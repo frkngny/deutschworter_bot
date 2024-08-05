@@ -1,6 +1,6 @@
 from flask import Blueprint, request, make_response, jsonify
 from . import db
-from .models import TelegramUser, GermanWords, WordSeen
+from .models import TelegramUser, GermanWords, WordSeen, UserConfiguration
 from sqlalchemy import text
 
 api = Blueprint('api', __name__)
@@ -10,7 +10,9 @@ def check_get_create_user(username):
     user = TelegramUser.query.filter_by(username=username).first()
     if not user:
         user = TelegramUser(username=username)
+        user_config = UserConfiguration(user_id = user.ID)
         db.session.add(user)
+        db.session.add(user_config)
         db.session.commit()
     return user
 
@@ -50,6 +52,34 @@ def user():
         _ = check_get_create_user(username)
         
         text = "User with username %s is created" % username
+        return make_response(jsonify(response=text), 200)
+
+@api.route('/user/configure', methods=['POST'])
+def user_configure():
+    if request.method == 'POST':
+        data = request.form
+        if 'username' not in data:
+            no_username_text = "username is not provided or not in correct syntax"
+            return make_response(jsonify(error=no_username_text), 400)
+        username = data['username']
+        user = check_get_create_user(username)
+        
+        user_config = UserConfiguration.query.filter_by(user_id=user.ID).first()
+        commit = False
+        if not user_config:
+            user_config = UserConfiguration(user_id = user.ID)
+            db.session.add(user_config)
+            commit = True
+        if 'lang' in data:
+            user_config.preferred_language = data['lang']
+            commit = True
+        if 'time' in data:
+            user_config.notification_time = data['time']
+            commit = True
+        if commit:
+            db.session.commit()
+        
+        text = "User configuration is updated"
         return make_response(jsonify(response=text), 200) 
 
 @api.route("/get_word", methods=['GET'])

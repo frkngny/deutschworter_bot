@@ -2,7 +2,8 @@ import requests
 
 
 params = {
-    'username': 'testuser'
+    'username': 'asd',
+    'lang': 'en',
+    'a': 'b'
 }
-json = requests.get('http://127.0.0.1:5000/api/get_word', data=params)
-print(json.json())
+resp = requests.post('http://127.0.0.1:5000/api/user/configure', data=params)

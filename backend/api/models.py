@@ -7,9 +7,16 @@ from sqlalchemy.sql import func
 class TelegramUser(db.Model):
     ID: int = Column(Integer, primary_key=True)
     username: str = Column(String(100), unique=True, nullable=False)
+    configuration = relationship('UserConfiguration')
     
     def to_dict(self):
         return { c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs if c.key != '_sa_instance_state' }
+
+class UserConfiguration(db.Model):
+    ID: int = Column(Integer, primary_key=True)
+    user_id: int = Column(ForeignKey(TelegramUser.ID))
+    preferred_language: str = Column(String(20), default="en")
+    notification_time: DateTime = Column(DateTime, default=func.now())
 
 class GermanWords(db.Model):
     ID: int = Column(Integer, primary_key=True)
