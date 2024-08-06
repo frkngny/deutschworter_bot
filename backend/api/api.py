@@ -2,6 +2,7 @@ from flask import Blueprint, request, make_response, jsonify
 from . import db
 from .models import TelegramUser, GermanWords, WordSeen, UserConfiguration
 from sqlalchemy import text
+import random
 
 api = Blueprint('api', __name__)
 
@@ -10,8 +11,10 @@ def check_get_create_user(username):
     user = TelegramUser.query.filter_by(username=username).first()
     if not user:
         user = TelegramUser(username=username)
-        user_config = UserConfiguration(user_id = user.ID)
         db.session.add(user)
+        db.session.commit()
+        
+        user_config = UserConfiguration(user_id = user.ID)
         db.session.add(user_config)
         db.session.commit()
     return user
@@ -29,10 +32,18 @@ def get_word_for_user(user):
     # filter out words sent to user, get first word which is not sent
     seen_words = WordSeen.query.filter_by(user_id=user.ID).all()
     
+    def word_id(item):
+        return item.ID   
+    
     if len(seen_words) > 0:
         seen_word_ids = [seen.to_dict()['word_id'] for seen in seen_words]
-        word = GermanWords.query.filter(GermanWords.ID.notin_(seen_word_ids)).first()
-        print(word)
+        words = GermanWords.query.filter(GermanWords.ID.notin_(seen_word_ids)).all()
+        
+        min_word = min(words, key=word_id)
+        max_word = max(words, key=word_id)
+        random_number = random.randint(min_word.ID, max_word.ID)
+        
+        word = words[random_number]
     else:
         word = GermanWords.query.first()
     return word
@@ -40,9 +51,9 @@ def get_word_for_user(user):
 
 
 ## Routes
-@api.route('/user', methods=['GET'])
+@api.route('/user', methods=['POST'])
 def user():
-    if request.method == 'GET':
+    if request.method == 'POST':
         data = request.form
         if 'username' not in data:
             no_username_text = "username is not provided or not in correct syntax"
@@ -94,7 +105,7 @@ def get_word():
         try:
             # get user if exists, create if not
             user = check_get_create_user(username)
-
+            
             # get word for the specific user, None if no word
             word = get_word_for_user(user)
             
@@ -109,4 +120,22 @@ def get_word():
         except Exception as e:
             text = f"Error: {str(e)}"
             return make_response(jsonify(error=text), 500)
+
+@api.route("/reset_words", methods=['POST'])
+def reset_words():
+    if request.method == 'POST':
+        data = request.form
+        if 'username' not in data:
+            no_username_text = "username is not provided or not in correct syntax"
+            return make_response(jsonify(error=no_username_text), 400)
+        
+        username = data['username']
+        user = TelegramUser.query.filter_by(username=username).first()
+        if not user:
+            no_user_text = "There is no user with this username"
+            return make_response(jsonify(error=no_user_text), 400)
+        
+        WordSeen.query.filter_by(user_id=user.ID).delete()
+        db.session.commit()
+        return make_response(jsonify(response="Success"), 200)
 ## Routes end

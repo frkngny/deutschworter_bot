@@ -23,6 +23,8 @@ def create_bot():
     # Commands
     app.add_handler(CommandHandler("start", commands.start))
     app.add_handler(CommandHandler("help", commands.help))
+    app.add_handler(CommandHandler("dailyword", commands.daily_word))
+    app.add_handler(CommandHandler("reset_previous_words", commands.reset_words))
 
     # Messages
     app.add_handler(MessageHandler(filters.TEXT, messages.handle_message))
