@@ -32,17 +32,12 @@ def get_word_for_user(user):
     # filter out words sent to user, get first word which is not sent
     seen_words = WordSeen.query.filter_by(user_id=user.ID).all()
     
-    def word_id(item):
-        return item.ID   
-    
     if len(seen_words) > 0:
         seen_word_ids = [seen.to_dict()['word_id'] for seen in seen_words]
         words = GermanWords.query.filter(GermanWords.ID.notin_(seen_word_ids)).all()
-        
-        min_word = min(words, key=word_id)
-        max_word = max(words, key=word_id)
-        random_number = random.randint(min_word.ID, max_word.ID)
-        
+        if not words:
+            return None
+        random_number = random.randint(0, len(words))
         word = words[random_number]
     else:
         word = GermanWords.query.first()
@@ -113,7 +108,6 @@ def get_word():
                 no_word_text = "We are sorry! There is no word left :/ We are frequently adding more words."
                 return make_response(jsonify(error=no_word_text))
             # add word to sent words for the user
-            # TODO: Uncomment this
             user_seen_word(user, word)
             
             return make_response(word.to_dict(), 200)
@@ -130,7 +124,7 @@ def reset_words():
             return make_response(jsonify(error=no_username_text), 400)
         
         username = data['username']
-        user = TelegramUser.query.filter_by(username=username).first()
+        user = check_get_create_user(username)
         if not user:
             no_user_text = "There is no user with this username"
             return make_response(jsonify(error=no_user_text), 400)
