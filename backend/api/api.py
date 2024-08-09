@@ -1,7 +1,6 @@
 from flask import Blueprint, request, make_response, jsonify
 from . import db
 from .models import TelegramUser, GermanWords, WordSeen, UserConfiguration
-from sqlalchemy import text
 import random
 
 api = Blueprint('api', __name__)

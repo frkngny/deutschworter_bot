@@ -1,5 +1,6 @@
 from telegram import Update
 from telegram.ext import ContextTypes
+from . import BASE_URL
 
 import requests
 
@@ -19,7 +20,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     if update.effective_user.username:
         params = {'username': update.effective_user.username}
-        requests.post('http://127.0.0.1:5000/api/user', data=params)
+        requests.post(f'{BASE_URL}/user', data=params)
     else:
         await update.message.reply_text('You don\'t have your username set. Please go to settings and set your username.')
     
@@ -32,7 +33,7 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def daily_word(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.username:
         params = {'username': update.effective_user.username}
-        resp = requests.get('http://127.0.0.1:5000/api/get_word', data=params)
+        resp = requests.get(f'{BASE_URL}/get_word', data=params)
         
         if resp.status_code < 400:
             word = resp.json()
@@ -64,7 +65,7 @@ async def daily_word(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def reset_words(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.username:
         params = {'username': update.effective_user.username}
-        resp = requests.post('http://127.0.0.1:5000/api/reset_words', data=params)
+        resp = requests.post(f'{BASE_URL}/reset_words', data=params)
         if resp.status_code < 400:
             await update.message.reply_text('All seen words storage is removed. You can now get previous words.')
         else:

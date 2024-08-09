@@ -14,6 +14,7 @@ env_path = os.path.join(os.path.dirname(BASE_DIR), ENV_NAME)
 TOKEN = dotenv.get_key(env_path, "TOKEN")
 BOT_USERNAME = dotenv.get_key(env_path, "USERNAME")
 
+BASE_URL = dotenv.get_key(env_path, "BASE_URL")
 
 def create_bot():
     app = ApplicationBuilder().token(TOKEN).build()
